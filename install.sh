@@ -15,3 +15,9 @@ link() {
 }
 
 link .zshrc
+
+if [[ "$(uname)" == "Darwin" ]]; then
+  for dir in ~/Library/Application\ Support/JetBrains/WebStorm*/; do
+    cp "$DOTFILES/jetbrains/keymaps/"*.xml "$dir/keymaps/" 2>/dev/null && echo "Installed keymaps to $dir"
+  done
+fi
