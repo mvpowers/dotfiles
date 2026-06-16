@@ -610,6 +610,25 @@ function fchanged() {
   [[ -n "$file" ]] && zed "$file"
 }
 
+# Fuzzy-select a tag and show it.
+function ftag() {
+  _require_command fzf || return 1
+
+  _is-git-repo || {
+    echo "Not inside a git repo."
+    return 1
+  }
+
+  local tag
+
+  tag=$(
+    git tag --sort=-creatordate |
+    fzf --preview 'git show --color=always --stat {}'
+  ) || return
+
+  [[ -n "$tag" ]] && git show --color=always "$tag"
+}
+
 # Fuzzy-inspect stashes.
 function fstash() {
   _require_command fzf || return 1
@@ -634,6 +653,7 @@ alias gfr='fbrm'
 alias gfc='fshow'
 alias gfw='fchanged'
 alias gfs='fstash'
+alias gft='ftag'
 
 
 # -----------------------------------------------------------------------------
@@ -820,6 +840,7 @@ function help() {
   printf "  ${GREEN}%-24s${RESET} %s\n" "gfc / fshow" "fuzzy-select a commit and show it"
   printf "  ${GREEN}%-24s${RESET} %s\n" "gfw / fchanged" "fuzzy-open changed, staged, or untracked files in Zed"
   printf "  ${GREEN}%-24s${RESET} %s\n" "gfs / fstash" "fuzzy-inspect git stashes"
+  printf "  ${GREEN}%-24s${RESET} %s\n" "gft / ftag" "fuzzy-select a tag and show it"
 
   print
   print -r -- "${BOLD}${CYAN}Docker / Compose${RESET}"
@@ -856,6 +877,30 @@ function help() {
 
   print
 }
+# -----------------------------------------------------------------------------
+# zsh-autosuggestions
+# -----------------------------------------------------------------------------
+
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+
+# -----------------------------------------------------------------------------
+# zoxide  (z / zi)
+# -----------------------------------------------------------------------------
+
+eval "$(zoxide init zsh)"
+
+alias cd='z'
+
+
+# -----------------------------------------------------------------------------
+# zsh-syntax-highlighting
+# Must be sourced last.
+# -----------------------------------------------------------------------------
+
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
 fpath=(/Users/mpowers/.docker/completions $fpath)
 autoload -Uz compinit
