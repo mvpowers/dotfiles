@@ -798,6 +798,8 @@ function help() {
   printf "  ${GREEN}%-24s${RESET} %s\n" "fproj / fp" "fuzzy-cd into ~/workspace, or a supplied base path"
   printf "  ${GREEN}%-24s${RESET} %s\n" "path" "print PATH one entry per line"
   printf "  ${GREEN}%-24s${RESET} %s\n" "md" "mkdir -p"
+  printf "  ${GREEN}%-24s${RESET} %s\n" "z <query>" "jump to a frecent directory (zoxide)"
+  printf "  ${GREEN}%-24s${RESET} %s\n" "zi" "fuzzy-pick a frecent directory (zoxide + fzf)"
 
   print
   print -r -- "${BOLD}${CYAN}File viewing / search${RESET}"
