@@ -485,44 +485,9 @@ function git-get-remote-branch() {
 }
 
 
-# List last N local branches by most-recent commit, then optionally checkout one.
 function git-latest-branches() {
-  local count=${1:-10}
-  local branches selection
-
-  branches=("${(@f)$(git for-each-ref --sort=-committerdate --format='%(refname:short)' refs/heads | head -n "$count")}")
-
-  if (( ${#branches[@]} == 0 )); then
-    echo "No local branches found."
-    return 1
-  fi
-
-  echo "Latest local branches:"
-  for i in {1..${#branches[@]}}; do
-    printf "%2d) %s\n" "$i" "${branches[$i]}"
-  done
-
-  echo
-  read "selection?Checkout one of these branches? (1-${#branches[@]}/N): "
-
-  if [[ -z "$selection" || "$selection" == [Nn] ]]; then
-    echo "No checkout performed."
-    return 0
-  fi
-
-  if ! [[ "$selection" =~ ^[0-9]+$ ]]; then
-    echo "Not a valid number: $selection"
-    return 1
-  fi
-
-  if (( selection < 1 || selection > ${#branches[@]} )); then
-    echo "Invalid selection: $selection"
-    return 1
-  fi
-
-  local target_branch=${branches[$selection]}
-  echo "Checking out: $target_branch"
-  git checkout "$target_branch"
+  echo "glb is deprecated — use fbr instead."
+  fbr
 }
 
 # Fetch master and fast-forward merge it into the current branch.
@@ -844,7 +809,7 @@ function help() {
   printf "  ${GREEN}%-24s${RESET} %s\n" "gl" "git lg"
   printf "  ${GREEN}%-24s${RESET} %s\n" "grb" "create local branch from origin/<branch>"
   printf "  ${GREEN}%-24s${RESET} %s\n" "gpmm" "fetch master and fast-forward merge it into current branch"
-  printf "  ${GREEN}%-24s${RESET} %s\n" "glb" "show recent local branches and optionally checkout one"
+  printf "  ${GREEN}%-24s${RESET} %s\n" "glb" "(deprecated) use fbr instead"
   printf "  ${GREEN}%-24s${RESET} %s\n" "format-branch" "prettier-format files changed on current branch"
 
   print
@@ -891,3 +856,8 @@ function help() {
 
   print
 }
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/mpowers/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
