@@ -10,6 +10,7 @@
 # -----------------------------------------------------------------------------
 
 export CLOUDSDK_PYTHON=$(which python3)
+export BUILDX_BAKE_ENTITLEMENTS_FS=0
 
 
 # -----------------------------------------------------------------------------
@@ -338,6 +339,8 @@ if [ -f '/opt/google-cloud-sdk/path.zsh.inc' ]; then . '/opt/google-cloud-sdk/pa
 # The next line enables shell command completion for gcloud.
 if [ -f '/opt/google-cloud-sdk/completion.zsh.inc' ]; then . '/opt/google-cloud-sdk/completion.zsh.inc'; fi
 
+alias gauth='gcloud auth login --update-adc'
+
 
 # -----------------------------------------------------------------------------
 # CB-specific
@@ -660,7 +663,79 @@ alias gft='ftag'
 # Formatting helpers
 # -----------------------------------------------------------------------------
 
-alias format-branch='cd "$(git rev-parse --show-toplevel)" && { git diff --name-only master...HEAD; git diff --name-only HEAD; } | sort -u | xargs npx prettier --write --ignore-unknown'
+# Prettier-format the files changed on the current branch, using the prettier
+# the repo pins rather than whatever version npx would fetch.
+format-branch() (
+  local root
+  root="$(git rev-parse --show-toplevel)" || return 1
+  cd "$root" || return 1
+
+  local bin
+  if [[ -x node_modules/.bin/prettier ]]; then
+    bin=node_modules/.bin/prettier
+  else
+    # Shallowest workspace install wins.
+    bin="$(find . -maxdepth 5 -path '*/node_modules/.bin/prettier' \
+             -not -path '*/node_modules/*/node_modules/*' 2>/dev/null \
+           | awk -F/ '{ print NF"\t"$0 }' | sort -n | cut -f2- | head -1)"
+  fi
+
+  if [[ -z "$bin" || ! -x "$bin" ]]; then
+    print -u2 "format-branch: no prettier installed under $root — run yarn/npm install first"
+    return 1
+  fi
+
+  local base= b
+  for b in master main; do
+    if git show-ref --verify --quiet "refs/heads/$b"; then base="$b"; break; fi
+  done
+
+  local -a changed files
+  changed=("${(@f)$({
+    [[ -n "$base" ]] && git diff --name-only "$base...HEAD"
+    git diff --name-only HEAD
+    git ls-files --others --exclude-standard
+  } 2>/dev/null | sort -u)}")
+
+  local f
+  for f in "${changed[@]}"; do
+    [[ -n "$f" && -f "$f" ]] && files+=("$f")
+  done
+
+  if (( ${#files} == 0 )); then
+    print "format-branch: nothing to format"
+    return 0
+  fi
+
+  print "format-branch: $bin $("$bin" --version) — ${#files} file(s)"
+  "$bin" --write --ignore-unknown "${files[@]}"
+)
+
+
+# -----------------------------------------------------------------------------
+# Terminal layout
+# -----------------------------------------------------------------------------
+
+# iTerm2 window: nvim left, claude top right, shell bottom right.
+dev() {
+  local dir="${1:-$PWD}"
+  osascript <<EOF
+tell application "iTerm2"
+  set w to (create window with default profile)
+  tell current session of w
+    write text "cd '$dir' && nvim"
+    set rightPane to (split vertically with default profile)
+  end tell
+  tell rightPane
+    write text "cd '$dir' && claude"
+    set bottomRight to (split horizontally with default profile)
+  end tell
+  tell bottomRight
+    write text "cd '$dir'"
+  end tell
+end tell
+EOF
+}
 
 
 # -----------------------------------------------------------------------------
@@ -802,6 +877,11 @@ function help() {
   printf "  ${GREEN}%-24s${RESET} %s\n" "zi" "fuzzy-pick a frecent directory (zoxide + fzf)"
 
   print
+  print -r -- "${BOLD}${CYAN}Terminal layout${RESET}"
+  print -r -- "$LINE"
+  printf "  ${GREEN}%-24s${RESET} %s\n" "dev [dir]" "iTerm2 window: nvim left, claude top right, shell bottom right"
+
+  print
   print -r -- "${BOLD}${CYAN}File viewing / search${RESET}"
   print -r -- "$LINE"
   printf "  ${GREEN}%-24s${RESET} %s\n" "ls" "eza"
@@ -891,8 +971,6 @@ source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 # -----------------------------------------------------------------------------
 
 eval "$(zoxide init zsh)"
-
-alias cd='z'
 
 
 # -----------------------------------------------------------------------------
