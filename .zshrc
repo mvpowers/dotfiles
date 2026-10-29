@@ -952,6 +952,7 @@ function help() {
   print -r -- "$LINE"
   printf "  ${GREEN}%-24s${RESET} %s\n" "reload" "source ~/.zshrc"
   printf "  ${GREEN}%-24s${RESET} %s\n" "zshrc" "open ~/.zshrc in Zed"
+  printf "  ${GREEN}%-24s${RESET} %s\n" "gauth" "gcloud auth login, also refreshing application-default credentials"
   printf "  ${GREEN}%-24s${RESET} %s\n" "brewup" "brew update, upgrade, and cleanup"
   printf "  ${GREEN}%-24s${RESET} %s\n" "doctor" "brew doctor"
   printf "  ${GREEN}%-24s${RESET} %s\n" "disk" "ncdu disk usage browser"
